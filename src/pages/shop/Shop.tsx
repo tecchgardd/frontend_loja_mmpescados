@@ -350,25 +350,55 @@ export default function Shop({ onLogout }: ShopProps) {
     }
   }
 
+  const STORE_WHATSAPP_NUMBER = '5548984483329'
+
+  const buildWhatsAppMessage = () => {
+    const lines: string[] = [
+      'Olá, gostaria de fazer um pedido:',
+      '',
+      `Nome: ${clientInfo.name}`,
+      `Telefone: ${clientInfo.phone}`,
+      `E-mail: ${clientInfo.email}`,
+      `Tipo de entrega: ${clientInfo.deliveryType === 'delivery' ? 'Entrega' : 'Retirada'}`,
+    ]
+
+    if (clientInfo.deliveryType === 'delivery') {
+      lines.push(`Endereço: ${clientInfo.address}, ${clientInfo.number}${clientInfo.complement ? ` - ${clientInfo.complement}` : ''}`)
+      lines.push(`CEP: ${clientInfo.cep}`)
+    }
+
+    lines.push(`Forma de pagamento: ${clientInfo.payment}`)
+    lines.push('')
+    lines.push('Itens:')
+
+    cart.forEach(item => {
+      const quantity = Number.isInteger(item.quantity) ? item.quantity.toString() : item.quantity.toFixed(2)
+      lines.push(`- ${quantity} x ${item.productName} (${formatCurrency(item.price)}) = ${formatCurrency(item.price * item.quantity)}`)
+    })
+
+    lines.push('')
+    lines.push(`Total: ${formatCurrency(cartTotal)}`)
+
+    if (clientInfo.notes) {
+      lines.push('')
+      lines.push(`Observações: ${clientInfo.notes}`)
+    }
+
+    return encodeURIComponent(lines.join('\n'))
+  }
+
+  const buildWhatsAppUrl = () => {
+    return `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${buildWhatsAppMessage()}`
+  }
+
   const handleFinalize = async () => {
+    if (!cart.length) {
+      alert('Seu carrinho está vazio.')
+      return
+    }
+
     setIsProcessing(true)
     try {
-      // await api.patch('/customers/me', {
-      //   name: clientInfo.name,
-      //   email: clientInfo.email,
-      //   phone: clientInfo.phone,
-      //   cellphone: clientInfo.phone,
-      //   document: clientInfo.taxId.replace(/\D/g, ''),
-      //   cpf: clientInfo.taxId.replace(/\D/g, ''),
-      //   taxId: clientInfo.taxId.replace(/\D/g, ''),
-      //   zipCode: clientInfo.cep.replace(/\D/g, ''),
-      //   cep: clientInfo.cep.replace(/\D/g, ''),
-      //   street: clientInfo.address,
-      //   address: clientInfo.address,
-      //   number: clientInfo.number,
-      //   complement: clientInfo.complement,
-      // })
-
       const payload = {
         contact: {
           name: clientInfo.name,
@@ -387,30 +417,7 @@ export default function Shop({ onLogout }: ShopProps) {
         notes: clientInfo.notes,
       }
 
-      const response = await api.post('/orders', payload)
-      const redirectUrl =
-        response?.redirectUrl ||
-        response?.paymentUrl ||
-        response?.url ||
-        response?.checkoutUrl ||
-        response?.payment?.redirectUrl ||
-        response?.payment?.paymentUrl ||
-        response?.payment?.url ||
-        response?.payment?.checkoutUrl ||
-        response?.payments?.[0]?.redirectUrl ||
-        response?.payments?.[0]?.paymentUrl ||
-        response?.payments?.[0]?.url ||
-        response?.payments?.[0]?.checkoutUrl
-
-      if (clientInfo.payment === 'AbacatePay' && redirectUrl) {
-        window.location.href = redirectUrl
-        return
-      }
-
-      if (clientInfo.payment === 'AbacatePay' && !redirectUrl) {
-        alert('O pedido foi criado, mas o link de pagamento não foi retornado pelo backend.')
-        return
-      }
+      await api.post('/orders', payload)
 
       setOrderSuccess(true)
       setCart([])
@@ -418,6 +425,8 @@ export default function Shop({ onLogout }: ShopProps) {
       setIsDrawerOpen(false)
       setCheckoutStep('cart')
       setTimeout(() => setOrderSuccess(false), 5000)
+
+      window.location.href = buildWhatsAppUrl()
     } catch (err: any) {
       console.error('Erro detalhado:', err)
       alert('Erro ao processar pedido: ' + (err.message || 'Erro desconhecido'))
