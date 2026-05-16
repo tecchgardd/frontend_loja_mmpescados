@@ -50,7 +50,7 @@ export default function Shop({ onLogout }: ShopProps) {
     number: '',
     complement: '',
     deliveryType: 'delivery' as 'delivery' | 'pickup',
-    payment: 'Pix' as 'Pix' | 'Cartão' | 'Dinheiro' | 'AbacatePay',
+    payment: 'Pix' as 'Pix' | 'Cartão' | 'Dinheiro',
     notes: ''
   })
 
@@ -413,7 +413,7 @@ export default function Shop({ onLogout }: ShopProps) {
           number: clientInfo.number,
           complement: clientInfo.complement,
         },
-        paymentMethod: clientInfo.payment === 'AbacatePay' ? 'ABACATEPAY' : clientInfo.payment,
+        paymentMethod: clientInfo.payment,
         notes: clientInfo.notes,
       }
 
@@ -1052,22 +1052,6 @@ export default function Shop({ onLogout }: ShopProps) {
                     </div>
                   </button>
 
-                  <button
-                    className={`pay-opt ${clientInfo.payment === 'AbacatePay' ? 'active' : ''}`}
-                    onClick={() => setClientInfo({ ...clientInfo, payment: 'AbacatePay' })}
-                  >
-                    <div className="pay-opt-content">
-                      <div className="pay-opt-icon">🥑</div>
-                      <div className="pay-opt-info">
-                        <span className="pay-opt-title">Abacate Pay</span>
-                        <span className="pay-opt-subtitle">Pix ou Cartão Online</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span className="payment-online-badge">Online</span>
-                      <div className="pay-opt-check"></div>
-                    </div>
-                  </button>
                 </div>
               </div>
             )}
@@ -1137,7 +1121,7 @@ export default function Shop({ onLogout }: ShopProps) {
               <div className="action-btns">
                 <button className="action-btn back-btn" onClick={() => setCheckoutStep('payment')}>Voltar</button>
                 <button className="action-btn main-action" onClick={handleFinalize} disabled={isProcessing}>
-                  {isProcessing ? 'Processando...' : clientInfo.payment === 'AbacatePay' ? 'Ir para pagamento' : 'Confirmar Pedido'}
+                  {isProcessing ? 'Processando...' : 'Confirmar Pedido'}
                 </button>
               </div>
             )}
